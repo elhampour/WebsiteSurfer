@@ -15,62 +15,51 @@ export default function* (req, res) {
 
     // let proxyList = yield FindProxyListService();
 
-    let ip = '138.68.169.8';
-    let port = '8080';
-
     let proxyList = [{
-        proxyUrl: `${ip}:${port}`
+        url: '142.93.182.13',
+        port: '8080'
     }];
 
-    let resdsads = yield TestProxyService(proxyList);
+    let path222 = '../files/entry.xlsx';
+    let rows = yield readXlsxFile(path222);
+    let resultPath = '../files/result.xlsx';
+
+    let currentIndex = 0;
+
+    let differentFiles = true;
+
+    if (!differentFiles) {
+        yield EnsureResultFileService(resultPath);
+    }
+
+    for (let index = 0; index < rows.length; index++) {
+        let siteUrl = rows[index][0];
+        let resultPathdiff = `../files/${siteUrl}.xlsx`;
+        let cdcdcd = yield fs.pathExists(resultPathdiff);
+        if (differentFiles) {
+            if (cdcdcd) {
+                continue;
+            }
+        }
+        let siteHtml = yield SiteCrawlerService(proxyList, siteUrl);
+        // let siteTitle = FindSiteTitleService.find(siteHtml);
+        let owner = FindOwnerService.find(siteHtml);
+        if (owner.name.length == 0) {
+            yield EnsureResultFileService(resultPathdiff);
+            continue;
+        }
+        let emailsAndPopSites = yield FindEmailsAndPopDomainsService(proxyList, owner.url);
+        emailsAndPopSites = yield AttachSitesToEmailsService(proxyList, emailsAndPopSites);
+        let thisSites = GetSites.get(siteUrl, emailsAndPopSites);
+        if (differentFiles) {
+            yield EnsureResultFileService(resultPathdiff);
+            yield WiteToResult(resultPathdiff, thisSites, 0);
+        } else {
+            yield WiteToResult(resultPath, thisSites, currentIndex);
+            currentIndex = currentIndex + thisSites.length;
+        }
+    }
 
     res.set({ 'content-type': 'application/json; charset=utf-8' });
-    res.end(JSON.stringify(resdsads));
-
-    return;
-
-    // let path222 = '../files/entry.xlsx';
-    // let rows = yield readXlsxFile(path222);
-    // let resultPath = '../files/result.xlsx';
-
-    // let currentIndex = 0;
-
-    // let differentFiles = true;
-
-    // if (!differentFiles) {
-    //     yield EnsureResultFileService(resultPath);
-    // }
-
-    // for (let index = 0; index < rows.length; index++) {
-    //     let siteUrl = rows[index][0];
-    //     let resultPathdiff = `../files/${siteUrl}.xlsx`;
-    //     let cdcdcd = yield fs.pathExists(resultPathdiff);
-    //     if (differentFiles) {
-    //         if (cdcdcd) {
-    //             continue;
-    //         }
-    //     }
-    //     let siteHtml = yield SiteCrawlerService(proxyList, siteUrl);
-    //     let siteTitle = FindSiteTitleService.find(siteHtml);
-    //     if (siteTitle.length == 0) {
-    //         continue;
-    //     }
-    //     let owner = FindOwnerService.find(siteHtml);
-    //     if (owner.name.length == 0) {
-    //         continue;
-    //     }
-    //     let emailsAndPopSites = yield FindEmailsAndPopDomainsService(proxyList, owner.url);
-    //     emailsAndPopSites = yield AttachSitesToEmailsService(proxyList, emailsAndPopSites);
-    //     let thisSites = GetSites.get(siteUrl, emailsAndPopSites);
-    //     if (differentFiles) {
-    //         yield EnsureResultFileService(resultPathdiff);
-    //         yield WiteToResult(resultPathdiff, thisSites, 0);
-    //     } else {
-    //         yield WiteToResult(resultPath, thisSites, currentIndex);
-    //         currentIndex = currentIndex + thisSites.length;
-    //     }
-    // }
-
-    // res.set({ 'content-type': 'application/json; charset=utf-8' });
-    // res.end(JSON.stringify({ success: true }));
+    res.end(JSON.stringify({ success: true }));
 };
