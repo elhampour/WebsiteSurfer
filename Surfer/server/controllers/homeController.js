@@ -13,6 +13,15 @@ import fs from 'fs-extra';
 
 export default function* (req, res) {
 
+    let start = req.query.start;
+    let end = req.query.end;
+
+    if (typeof (start) === "undefined" || typeof (end) === "undefined") {
+        res.set({ 'content-type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ success: false, message: 'lack of entries' }));
+        return;
+    }
+
     // let proxyList = yield FindProxyListService();
 
     let proxyList = [{
@@ -32,7 +41,7 @@ export default function* (req, res) {
         yield EnsureResultFileService(resultPath);
     }
 
-    for (let index = 0; index < rows.length; index++) {
+    for (let index = start; index < end; index++) {
         let siteUrl = rows[index][0];
         let resultPathdiff = `../files/${siteUrl}.xlsx`;
         let cdcdcd = yield fs.pathExists(resultPathdiff);
